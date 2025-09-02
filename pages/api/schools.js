@@ -1,11 +1,9 @@
-// pages/api/schools.js
-import { createRouter } from 'next-connect';
-const multer = require('multer');
-const path = require('path');
-const connection = require('../../lib/db');
+import nextConnect from 'next-connect';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import connection from '../../lib/db';
 
-// Set up multer storage (for saving images)
-const fs = require('fs');
 const imageDir = './public/schoolImages';
 if (!fs.existsSync(imageDir)) {
   fs.mkdirSync(imageDir, { recursive: true });
@@ -13,12 +11,12 @@ if (!fs.existsSync(imageDir)) {
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination: './public/schoolImages',
+    destination: imageDir,
     filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
   }),
 });
 
-const apiRoute = createRouter({
+const apiRoute = nextConnect({
   onError(error, req, res) {
     res.status(501).json({ error: `Sorry something happened! ${error.message}` });
   },
@@ -33,17 +31,17 @@ apiRoute.post(async (req, res) => {
   try {
     console.log('POST body:', req.body);
     console.log('POST file:', req.file);
-
     const { name, address, city, state, contact, email_id } = req.body;
     const image = req.file ? `/schoolImages/${req.file.filename}` : null;
-
+    
     if (!name || !email_id) {
       console.log('Missing name or email');
       return res.status(400).json({ error: 'Name and Email are required' });
     }
-
+    
     const sql = 'INSERT INTO schools (name, address, city, state, contact, image, email_id) VALUES (?, ?, ?, ?, ?, ?, ?)';
     const [result] = await connection.execute(sql, [name, address, city, state, contact, image, email_id]);
+    
     res.status(201).json({ message: 'School added', id: result.insertId });
   } catch (error) {
     console.error('POST error:', error);
