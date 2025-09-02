@@ -4,13 +4,13 @@ import path from 'path';
 import fs from 'fs';
 import connection from '../../lib/db';
 
-// Ensure image directory exists
+// Ensure /tmp directory exists (Vercel-compatible)
 const imageDir = '/tmp/schoolImages';
 if (!fs.existsSync(imageDir)) {
   fs.mkdirSync(imageDir, { recursive: true });
 }
 
-// Configure multer for file uploads
+// Multer setup for image uploads
 const upload = multer({
   storage: multer.diskStorage({
     destination: imageDir,
