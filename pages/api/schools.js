@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import connection from '../../lib/db';
-import nc from 'next-connect';
+import ncModule from 'next-connect';
+const nc = ncModule.default || ncModule;
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -30,14 +31,11 @@ apiRoute.use(upload.single('image'));
 
 apiRoute.post(async (req, res) => {
   const { name, address, city, state, contact, email_id } = req.body;
-
   if (!name || !email_id) {
     return res.status(400).json({ error: 'Name and Email are required' });
   }
-
   // Since /tmp folder is not publicly accessible, store the filename or consider external storage
   const image = req.file ? req.file.filename : null;
-
   try {
     const sql =
       'INSERT INTO schools (name, address, city, state, contact, image, email_id) VALUES (?, ?, ?, ?, ?, ?, ?)';
