@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-// pages/api/schools.js
 import connection from '../../lib/db';
 import nextConnect from 'next-connect';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
-// Set up multer storage (for saving images)
+const imageDir = '/tmp/schoolImages';
+if (!fs.existsSync(imageDir)) {
+  fs.mkdirSync(imageDir, { recursive: true });
+}
+
 const upload = multer({
   storage: multer.diskStorage({
-    destination: './public/schoolImages',
+    destination: imageDir,
     filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
   }),
 });
@@ -26,14 +30,14 @@ apiRoute.use(upload.single('image'));
 
 apiRoute.post(async (req, res) => {
   const { name, address, city, state, contact, email_id } = req.body;
-  const image = req.file ? `/schoolImages/${req.file.filename}` : null;
+  const image = req.file ? `/tmp/schoolImages/${req.file.filename}` : null;
 
   if (!name || !email_id) {
     return res.status(400).json({ error: 'Name and Email are required' });
   }
-
-  const sql = 'INSERT INTO schools (name, address, city, state, contact, image, email_id) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  
   try {
+    const sql = 'INSERT INTO schools (name, address, city, state, contact, image, email_id) VALUES (?, ?, ?, ?, ?, ?, ?)';
     const [result] = await connection.execute(sql, [name, address, city, state, contact, image, email_id]);
     res.status(201).json({ message: 'School added', id: result.insertId });
   } catch (error) {
@@ -54,7 +58,6 @@ export default apiRoute;
 
 export const config = {
   api: {
-    bodyParser: false, // required for multer
+    bodyParser: false,
   },
 };
-
